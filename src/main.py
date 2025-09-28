@@ -18,18 +18,6 @@ async def main():
         Path(os.path.dirname(__file__)).parent / "custom_help_message.txt"
     )
 
-    if os.path.isfile(help_message_path):
-        try:
-            f = open(help_message_path, encoding="utf8")
-            custom_help_message = ""
-            for line in f.readlines():
-                custom_help_message += line
-        except Exception as e:
-            logger.error(e)
-            sys.exit(1)
-    else:
-        custom_help_message = None
-
     if os.path.isfile(config_path):
         try:
             fp = open(config_path, encoding="utf8")
@@ -38,82 +26,20 @@ async def main():
             logger.error("config.json load error, please check the file")
             sys.exit(1)
 
+        text_url = config.get('text_dev_url') if bool(os.environ.get('DEV', False)) else config.get('text_url')
+        audio_url = config.get('audio_dev_url') if os.environ.get('DEV', False) else config.get('audio_url')
+
         matrix_bot = Bot(
+            user_id=config.get('user_id'),
             homeserver=config.get("homeserver"),
-            user_id=config.get("user_id"),
-            password=config.get("password"),
             access_token=config.get("access_token"),
             device_id=config.get("device_id"),
             whitelist_room_id=config.get("room_id"),
-            import_keys_path=config.get("import_keys_path"),
-            import_keys_password=config.get("import_keys_password"),
-            openai_api_key=config.get("openai_api_key"),
-            gpt_api_endpoint=config.get("gpt_api_endpoint"),
-            gpt_model=config.get("gpt_model"),
-            max_tokens=config.get("max_tokens"),
-            top_p=config.get("top_p"),
-            presence_penalty=config.get("presence_penalty"),
-            frequency_penalty=config.get("frequency_penalty"),
-            reply_count=config.get("reply_count"),
-            system_prompt=config.get("system_prompt"),
-            temperature=config.get("temperature"),
-            lc_admin=config.get("lc_admin"),
-            image_generation_endpoint=config.get("image_generation_endpoint"),
-            image_generation_backend=config.get("image_generation_backend"),
-            image_generation_size=config.get("image_generation_size"),
-            sdwui_steps=config.get("sdwui_steps"),
-            sdwui_sampler_name=config.get("sdwui_sampler_name"),
-            sdwui_cfg_scale=config.get("sdwui_cfg_scale"),
-            image_format=config.get("image_format"),
-            gpt_vision_model=config.get("gpt_vision_model"),
-            gpt_vision_api_endpoint=config.get("gpt_vision_api_endpoint"),
             timeout=config.get("timeout"),
-            custom_help_message=custom_help_message,
+            text_url=text_url,
+            audio_url=audio_url,
+            key=config.get('key')
         )
-        if (
-            config.get("import_keys_path")
-            and config.get("import_keys_password") is not None
-        ):
-            need_import_keys = True
-
-    else:
-        matrix_bot = Bot(
-            homeserver=os.environ.get("HOMESERVER"),
-            user_id=os.environ.get("USER_ID"),
-            password=os.environ.get("PASSWORD"),
-            access_token=os.environ.get("ACCESS_TOKEN"),
-            device_id=os.environ.get("DEVICE_ID"),
-            whitelist_room_id=os.environ.get("ROOM_ID"),
-            import_keys_path=os.environ.get("IMPORT_KEYS_PATH"),
-            import_keys_password=os.environ.get("IMPORT_KEYS_PASSWORD"),
-            openai_api_key=os.environ.get("OPENAI_API_KEY"),
-            gpt_api_endpoint=os.environ.get("GPT_API_ENDPOINT"),
-            gpt_model=os.environ.get("GPT_MODEL"),
-            max_tokens=int(os.environ.get("MAX_TOKENS", 4000)),
-            top_p=float(os.environ.get("TOP_P", 1.0)),
-            presence_penalty=float(os.environ.get("PRESENCE_PENALTY", 0.0)),
-            frequency_penalty=float(os.environ.get("FREQUENCY_PENALTY", 0.0)),
-            reply_count=int(os.environ.get("REPLY_COUNT", 1)),
-            system_prompt=os.environ.get("SYSTEM_PROMPT"),
-            temperature=float(os.environ.get("TEMPERATURE", 0.8)),
-            lc_admin=os.environ.get("LC_ADMIN"),
-            image_generation_endpoint=os.environ.get("IMAGE_GENERATION_ENDPOINT"),
-            image_generation_backend=os.environ.get("IMAGE_GENERATION_BACKEND"),
-            image_generation_size=os.environ.get("IMAGE_GENERATION_SIZE"),
-            sdwui_steps=int(os.environ.get("SDWUI_STEPS", 20)),
-            sdwui_sampler_name=os.environ.get("SDWUI_SAMPLER_NAME"),
-            sdwui_cfg_scale=float(os.environ.get("SDWUI_CFG_SCALE", 7)),
-            image_format=os.environ.get("IMAGE_FORMAT"),
-            gpt_vision_model=os.environ.get("GPT_VISION_MODEL"),
-            gpt_vision_api_endpoint=os.environ.get("GPT_VISION_API_ENDPOINT"),
-            timeout=float(os.environ.get("TIMEOUT", 120.0)),
-            custom_help_message=custom_help_message,
-        )
-        if (
-            os.environ.get("IMPORT_KEYS_PATH")
-            and os.environ.get("IMPORT_KEYS_PASSWORD") is not None
-        ):
-            need_import_keys = True
 
     await matrix_bot.login()
     if need_import_keys:
